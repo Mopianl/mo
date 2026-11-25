@@ -55,7 +55,8 @@ npx wrangler pages deploy dist --project-name tarot-emotion
 细节：
 
 - 危机词命中（`functions/_lib/crisis.js`）**完全不调模型**，直接返回 12356／120／110 的关怀文案，`safety.level = "crisis"`
-- 模型默认 `deepseek-chat`，可用 `DEEPSEEK_MODEL` 覆盖（设计文档写的 `deepseek-flash` 不是 DeepSeek 官方模型名）
+- 模型默认 `deepseek-flash`（官方现行模型名，可用 `DEEPSEEK_MODEL` 覆盖）；请求里显式 `thinking: { type: "disabled" }`，解读要快，不走思维链
+- 非思考模式下 `temperature 0.8` 才生效（思考模式会忽略它）
 - 首字 15 秒没来 → `UPSTREAM_TIMEOUT`；整段上限 60 秒
 - 模型没写免责行时服务端补上
 - 上游地址可用 `DEEPSEEK_API_URL` 覆盖，本地联调指向 `scripts/mock-deepseek.mjs`

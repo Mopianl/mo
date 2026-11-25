@@ -1,11 +1,11 @@
-import cards from '../../data/cards.json'
+﻿import cards from '../../data/cards.json'
 import { isUnlocked, json } from '../_lib/auth.js'
 import { isCrisis, CRISIS_REPLY } from '../_lib/crisis.js'
 import { buildMessages, DISCLAIMER } from '../_lib/prompt.js'
 
 const FIRST_TOKEN_MS = 15000 // 首字 15 秒没来就降级
 const TOTAL_MS = 60000 // 整段最多 60 秒
-const MODEL_FALLBACK = 'deepseek-chat' // 文档里的 deepseek-flash 不是官方模型名
+const MODEL_FALLBACK = 'deepseek-flash' // 官方现行模型名
 
 const encoder = new TextEncoder()
 const sse = (obj) => encoder.encode(`data: ${JSON.stringify(obj)}\n\n`)
@@ -76,6 +76,7 @@ export async function onRequestPost({ request, env }) {
       body: JSON.stringify({
         model,
         messages: buildMessages({ card, orientation, userNote }),
+        thinking: { type: 'disabled' }, // 解读要快，不要思维链
         temperature: 0.8,
         max_tokens: 1200,
         stream: true
