@@ -7,6 +7,18 @@
 - 牌库：`data/cards.json`（22 张，含正逆位关键词与牌义）
 - 牌面：`public/cards/*.webp`（640px 宽，单张 ≤100KB）
 
+## 素材与牌面重压
+
+原始大图统一放 `D:\Working\web-project`（文件名 `major-00.jpg`…`major-21.jpg`）。
+新增或替换素材后重跑一次压缩即可，不必手动调参：
+
+```bash
+python scripts/compress_cards.py            # 默认读 D:\Working\web-project
+python scripts/compress_cards.py <源目录>    # 也可以指定别的目录
+```
+
+脚本流程：EXIF 转正 → 宽 640 → 中值去噪 + 平滑（扫描件纸纹重，不去噪压不到 100KB）→ WebP 质量 88 起逐档下降，取第一个 ≤100KB 的档位。
+
 ## 本地开发
 
 ```bash
