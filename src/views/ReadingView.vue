@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { cardImage, drawCard, loadSettings } from '../data.js'
@@ -45,6 +45,20 @@ onMounted(() => {
   // 等一帧再翻，保证过渡动画能看到
   requestAnimationFrame(() => setTimeout(() => (flipped.value = true), 60))
 })
+
+/** 再抽一张：同一路由内重开，不跳转（push 同一路由不会重新挂载） */
+function drawAgain() {
+  started.value = false
+  streaming.value = false
+  degraded.value = false
+  crisis.value = false
+  errorMsg.value = ''
+  text.value = ''
+  flipped.value = false
+  drawn.value = drawCard()
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+  requestAnimationFrame(() => setTimeout(() => (flipped.value = true), 80))
+}
 
 function fallbackText() {
   return `【${card.value.nameZh} · ${isReversed.value ? '逆位' : '正位'}】\n\n${meaning.value}`
@@ -126,7 +140,7 @@ async function viewReading() {
           本内容由 AI 生成，仅供娱乐与自我觉察参考，不构成任何诊断或建议。
           如有持续困扰，请与信任的人聊聊，或联系专业心理支持。
         </p>
-        <button class="ghost" @click="router.push({ name: 'reading' })">再抽一张</button>
+        <button class="ghost" @click="drawAgain">再抽一张</button>
       </template>
     </section>
   </main>
