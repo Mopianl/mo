@@ -1,4 +1,4 @@
-// 截「查看解读」之后的流式结果：node scripts/shot-stream.mjs <out.png> [waitMs] [note]
+﻿// 截「查看解读」之后的流式结果：node scripts/shot-stream.mjs <out.png> [waitMs] [note]
 import fs from 'node:fs'
 import crypto from 'node:crypto'
 
@@ -9,7 +9,7 @@ const env = Object.fromEntries(
   devVars.split(/\r?\n/).filter((l) => l && !l.startsWith('#')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])
 )
 
-const targets = await (await fetch('http://127.0.0.1:9222/json/list')).json()
+const targets = await (await fetch('http://127.0.0.1:' + (process.env.CDP_PORT || 9222) + '/json/list')).json()
 const page = targets.find((t) => t.type === 'page')
 if (!page) throw new Error('no page target')
 const ws = new WebSocket(page.webSocketDebuggerUrl)

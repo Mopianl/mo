@@ -1,10 +1,10 @@
 :root {
-  --bg: #0d0a19;
-  --bg-2: #17122c;
-  --text: #ece7f7;
-  --muted: #948cb0;
-  --gold: #d8b26a;
-  --line: rgba(216, 178, 106, 0.22);
+  --bg: #0a0913;
+  --bg-2: #141124;
+  --text: #efeaf7;
+  --muted: #9a93b5;
+  --gold: #c9a86a;
+  --line: rgba(201, 168, 106, 0.22);
   color-scheme: dark;
 }
 
@@ -20,15 +20,13 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(120% 80% at 50% -10%, #241c46 0%, transparent 55%),
-    radial-gradient(90% 60% at 50% 108%, #1b1533 0%, transparent 60%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB',
     'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overflow-x: hidden;
 }
 
 #app {
@@ -38,11 +36,21 @@ body {
   max-width: 430px;
   margin: 0 auto;
   position: relative;
+  z-index: 1;
 }
 
 button {
   font-family: inherit;
   cursor: pointer;
+}
+
+/* 轻微浮动：位置基本不动，只抬起一点 */
+.floatable {
+  transition: transform 0.55s cubic-bezier(0.22, 0.8, 0.24, 1),
+    box-shadow 0.55s ease;
+}
+.floatable.is-floating {
+  transform: translateY(calc(var(--float-lift, 6px) * -1));
 }
 
 /* 路由过渡 */
@@ -62,6 +70,9 @@ button {
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;
   transition-duration: 0.01ms !important;
+}
+.reduce-motion .floatable.is-floating {
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -5,6 +5,7 @@ import GateView from './views/GateView.vue'
 import HomeView from './views/HomeView.vue'
 import ReadingView from './views/ReadingView.vue'
 import { auth, checkGate } from './api.js'
+import float from './directives/float.js'
 import './styles.css'
 
 const router = createRouter({
@@ -26,4 +27,4 @@ router.beforeEach(async (to) => {
   return true
 })
 
-createApp(App).use(router).mount('#app')
+createApp(App).use(router).directive('float', float).mount('#app')

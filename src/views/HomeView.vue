@@ -27,7 +27,7 @@ function confirmAge() {
     <section class="hero">
       <p class="eyebrow">静夜牌</p>
       <h1>抽一张牌，<br />看看此刻的自己</h1>
-      <div class="deck" aria-hidden="true">
+      <div class="deck" aria-hidden="true" v-float="{ lift: 7, range: 210 }">
         <div class="deck-card c3"></div>
         <div class="deck-card c2"></div>
         <div class="deck-card c1"></div>
@@ -43,7 +43,7 @@ function confirmAge() {
           aria-label="此刻最想说的一句话"
         />
       </label>
-      <button class="primary" @click="start">开始自测</button>
+      <button class="primary" v-float="{ lift: 5, range: 140 }" @click="start">开始自测</button>
       <p class="meta">22 张大阿卡纳 · 单张牌阵 · 约 1 分钟</p>
     </section>
 
@@ -166,7 +166,7 @@ h1 {
   padding: 15px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #e0bd78, #c39b4f);
+  background: linear-gradient(135deg, #d3b077, #b08d4e);
   color: #1b1526;
   font-size: 15px;
   font-weight: 600;

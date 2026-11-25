@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { submitPassword } from '../api.js'
@@ -40,7 +40,6 @@ async function onSubmit() {
 
 <template>
   <main class="gate">
-    <div class="gate-stars" aria-hidden="true"></div>
     <section class="gate-box" :class="{ shake }">
       <p class="eyebrow">静夜牌</p>
       <h1>先说一句悄悄话</h1>
@@ -57,7 +56,7 @@ async function onSubmit() {
           aria-label="访问口令"
           :disabled="busy"
         />
-        <button type="submit" :disabled="busy || !password.trim()">
+        <button type="submit" v-float="{ lift: 4, range: 120 }" :disabled="busy || !password.trim()">
           {{ busy ? '核对中…' : '进入' }}
         </button>
       </form>
@@ -130,7 +129,7 @@ button {
   padding: 14px 16px;
   border-radius: 12px;
   border: none;
-  background: linear-gradient(135deg, #e0bd78, #c39b4f);
+  background: linear-gradient(135deg, #d3b077, #b08d4e);
   color: #1b1526;
   font-size: 15px;
   font-weight: 600;

@@ -107,7 +107,7 @@ async function viewReading() {
   <main v-if="card" class="reading">
     <button class="back" @click="router.push({ name: 'home' })" aria-label="返回">‹</button>
 
-    <section class="stage">
+    <section class="stage" v-float="{ lift: 7, range: 220 }">
       <div class="card-shell" :class="{ flipped, reversed: isReversed && flipped }">
         <div class="card-face card-back">
           <span>✦</span>
@@ -126,7 +126,7 @@ async function viewReading() {
         <li v-for="k in keywords" :key="k">{{ k }}</li>
       </ul>
 
-      <button v-if="!started" class="primary" @click="viewReading">查看解读</button>
+      <button v-if="!started" class="primary" v-float="{ lift: 5, range: 140 }" @click="viewReading">查看解读</button>
       <template v-else>
         <p v-if="errorMsg" class="note">{{ errorMsg }}</p>
         <div class="reading-text" :class="{ typing: streaming }">
@@ -264,7 +264,7 @@ h1 {
   padding: 15px;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #e0bd78, #c39b4f);
+  background: linear-gradient(135deg, #d3b077, #b08d4e);
   color: #1b1526;
   font-size: 15px;
   font-weight: 600;

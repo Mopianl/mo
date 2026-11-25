@@ -14,7 +14,7 @@ const env = Object.fromEntries(
     .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])
 )
 
-const targets = await (await fetch('http://127.0.0.1:9222/json/list')).json()
+const targets = await (await fetch('http://127.0.0.1:' + (process.env.CDP_PORT || 9222) + '/json/list')).json()
 const page = targets.find((t) => t.type === 'page')
 if (!page) throw new Error('no page target')
 

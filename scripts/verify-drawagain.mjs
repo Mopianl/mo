@@ -1,4 +1,4 @@
-// 验证「再抽一张」真的换牌：读两次 h1 文本
+﻿// 验证「再抽一张」真的换牌：读两次 h1 文本
 import fs from 'node:fs'
 import crypto from 'node:crypto'
 
@@ -6,7 +6,7 @@ const devVars = fs.readFileSync(new URL('../.dev.vars', import.meta.url), 'utf8'
 const env = Object.fromEntries(
   devVars.split(/\r?\n/).filter(Boolean).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1)])
 )
-const targets = await (await fetch('http://127.0.0.1:9222/json/list')).json()
+const targets = await (await fetch('http://127.0.0.1:' + (process.env.CDP_PORT || 9222) + '/json/list')).json()
 const page = targets.find((t) => t.type === 'page')
 const ws = new WebSocket(page.webSocketDebuggerUrl)
 await new Promise((res, rej) => { ws.onopen = res; ws.onerror = rej })

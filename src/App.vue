@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { loadSettings } from './data.js'
+import StarField from './components/StarField.vue'
 
 const reduceMotion = ref(false)
 
@@ -12,7 +13,7 @@ onMounted(() => {
 
 <template>
   <div class="app-shell">
-    <router-view v-slot="{ Component }">
+    <StarField />    <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
         <component :is="Component" />
       </transition>
