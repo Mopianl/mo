@@ -1,5 +1,5 @@
 // 真接口联调：登录 → 抽牌解读 → 统计首字时间 / 用量 / 花费
-const BASE = 'http://127.0.0.1:8788'
+const BASE = process.env.BASE || 'http://127.0.0.1:8788'
 const PASSWORD = process.env.ACCESS_PASSWORD || 'xiaofeiyv'
 
 const gate = await fetch(`${BASE}/api/gate`, {
