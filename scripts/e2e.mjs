@@ -55,13 +55,56 @@ check('带 cookie /api/gate 200', res.status === 200, res.status)
 res = await fetch(base + '/api/reading', { method: 'POST', body: '{}' })
 check('未登录 /api/reading 401', res.status === 401, res.status)
 
-// 登录后 reading（T2 未接 → 501）
-res = await fetch(base + '/api/reading', {
-  method: 'POST',
-  headers: { cookie },
-  body: JSON.stringify({ cardId: 'major-13', orientation: 'upright' })
-})
-check('已登录 /api/reading 501', res.status === 501, res.status)
+// 登录后 reading（本地 .dev.vars 指向 scripts/mock-deepseek.mjs）
+const readAll = async (r) => {
+  const reader = r.body.getReader()
+  const dec = new TextDecoder()
+  let out = ''
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    out += dec.decode(value, { stream: true })
+  }
+  return out
+}
+
+const reading = (payload) =>
+  fetch(base + '/api/reading', {
+    method: 'POST',
+    headers: { cookie, 'content-type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+
+res = await reading({ cardId: 'major-13', orientation: 'upright', userNote: '有点累' })
+check('已登录 /api/reading 200', res.status === 200, res.status)
+check('返回 event-stream', (res.headers.get('content-type') || '').includes('text/event-stream'))
+let body = await readAll(res)
+check('流里有四段小标题', body.includes('## 你此刻的状态') && body.includes('## 可以试试'))
+check('流里有结束标记', body.includes('"done":true'))
+check('流里有免责行', body.includes('仅供娱乐与自我觉察参考'))
+
+// 逆位
+res = await reading({ cardId: 'major-13', orientation: 'reversed' })
+body = await readAll(res)
+check('逆位也能出文', res.status === 200 && body.includes('"delta"'))
+
+// 危机词：不调模型，直接关怀文案
+res = await reading({ cardId: 'major-13', orientation: 'upright', userNote: '我真的想死' })
+body = await readAll(res)
+check('危机词 200', res.status === 200, res.status)
+check('危机词包含 12356', body.includes('12356'))
+check('危机词打 crisis 标记', body.includes('"level":"crisis"'))
+check('危机词不调模型（无四段小标题）', !body.includes('## 你此刻的状态'))
+
+// 非法入参
+res = await reading({ cardId: 'major-99', orientation: 'upright' })
+check('未知牌 400', res.status === 400, res.status)
+res = await reading({ cardId: 'major-13', orientation: 'sideways' })
+check('非法朝向 400', res.status === 400, res.status)
+
+// 上游 500 → 502，前端走降级
+res = await reading({ cardId: 'major-13', orientation: 'upright', userNote: 'MOCK500' })
+check('上游报错 502', res.status === 502, res.status)
 
 console.log(`\n${pass} passed, ${fail} failed`)
 process.exit(fail ? 1 : 0)

@@ -1,7 +1,8 @@
-<script setup>
+﻿<script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { loadSettings, saveSettings } from '../data.js'
+import { draft } from '../state.js'
 
 const router = useRouter()
 const showAge = ref(false)
@@ -32,6 +33,16 @@ function confirmAge() {
         <div class="deck-card c1"></div>
       </div>
       <p class="lead">不用想太多，也不用想得很好。<br />先深呼吸一次，再开始。</p>
+      <label class="mood">
+        <span>此刻最想说的一句话（可以不写）</span>
+        <input
+          v-model="draft.note"
+          type="text"
+          maxlength="60"
+          placeholder="比如：有点累，说不上来"
+          aria-label="此刻最想说的一句话"
+        />
+      </label>
       <button class="primary" @click="start">开始自测</button>
       <p class="meta">22 张大阿卡纳 · 单张牌阵 · 约 1 分钟</p>
     </section>
@@ -117,6 +128,38 @@ h1 {
   font-size: 13px;
   line-height: 1.9;
   color: var(--muted);
+}
+.mood {
+  display: block;
+  margin: 0 0 18px;
+  text-align: left;
+}
+.mood span {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  opacity: 0.85;
+}
+.mood input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  font-size: 13px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.mood input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+.mood input:focus {
+  border-color: rgba(216, 178, 106, 0.5);
 }
 .primary {
   width: 100%;

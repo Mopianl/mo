@@ -74,6 +74,12 @@ export async function streamReading(payload, onDelta) {
       } catch {
         continue
       }
+      if (evt.error) {
+        const err = new Error(evt.error)
+        err.code = evt.error
+        err.partial = text
+        throw err
+      }
       if (evt.delta) {
         text += evt.delta
         onDelta && onDelta(evt.delta)

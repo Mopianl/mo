@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { cardImage, drawCard, loadSettings } from '../data.js'
 import { streamReading } from '../api.js'
+import { draft } from '../state.js'
 
 const router = useRouter()
 const drawn = ref(null)
@@ -14,6 +15,7 @@ const streaming = ref(false)
 const degraded = ref(false)
 const started = ref(false)
 const errorMsg = ref('')
+const crisis = ref(false)
 
 const card = computed(() => drawn.value?.card || null)
 const orientation = computed(() => drawn.value?.orientation || 'upright')
@@ -24,6 +26,17 @@ const keywords = computed(() =>
 )
 const meaning = computed(() =>
   card.value ? card.value.meaning[orientation.value] : ''
+)
+
+/** 把「## 小标题」渲染成小标题，其余按段落 */
+const blocks = computed(() =>
+  text.value
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) =>
+      line.startsWith('## ') ? { type: 'h', text: line.slice(3) } : { type: 'p', text: line }
+    )
 )
 
 onMounted(() => {
@@ -46,25 +59,31 @@ async function viewReading() {
   const payload = {
     cardId: card.value.id,
     orientation: orientation.value,
-    userNote: '',
+    userNote: draft.note.trim(),
     locale: 'zh-CN'
   }
   try {
-    await streamReading(payload, (delta) => {
+    const result = await streamReading(payload, (delta) => {
       text.value += delta
     })
+    if (result.safety?.level === 'crisis') {
+      crisis.value = true
+    }
   } catch (err) {
     degraded.value = true
-    if (err.code === 'NOT_IMPLEMENTED' || err.code === 'UPSTREAM_ERROR') {
+    if (err.partial) text.value = err.partial
+    if (err.code === 'UPSTREAM_TIMEOUT') {
+      errorMsg.value = 'AI 那边有点慢，先看牌面本身吧'
+    } else if (err.code === 'NOT_IMPLEMENTED' || err.code === 'UPSTREAM_ERROR') {
       errorMsg.value = 'AI 解读还在接，先看牌面本身吧'
     } else if (err.code === 'UNAUTHORIZED') {
       errorMsg.value = '登录状态失效了，回首页重新进入'
-    } else if (err.code === 'CRISIS_BLOCKED') {
-      errorMsg.value = ''
+    } else if (err.code === 'INVALID_INPUT') {
+      errorMsg.value = '这张牌没抽好，退回去再抽一次'
     } else {
       errorMsg.value = '网络不太稳，给你一个简版'
     }
-    text.value = fallbackText()
+    if (!text.value) text.value = fallbackText()
   }
   streaming.value = false
 }
@@ -97,10 +116,13 @@ async function viewReading() {
       <template v-else>
         <p v-if="errorMsg" class="note">{{ errorMsg }}</p>
         <div class="reading-text" :class="{ typing: streaming }">
-          <p v-for="(para, i) in text.split('\n').filter(Boolean)" :key="i">{{ para }}</p>
+          <template v-for="(block, i) in blocks" :key="i">
+            <h3 v-if="block.type === 'h'" class="section">{{ block.text }}</h3>
+            <p v-else>{{ block.text }}</p>
+          </template>
           <span v-if="streaming" class="caret"></span>
         </div>
-        <p class="disclaimer">
+        <p v-if="!crisis" class="disclaimer">
           本内容由 AI 生成，仅供娱乐与自我觉察参考，不构成任何诊断或建议。
           如有持续困扰，请与信任的人聊聊，或联系专业心理支持。
         </p>
@@ -251,6 +273,16 @@ h1 {
 }
 .reading-text p {
   margin: 0 0 14px;
+}
+.reading-text .section {
+  margin: 22px 0 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+}
+.reading-text .section:first-child {
+  margin-top: 0;
 }
 .caret {
   display: inline-block;
