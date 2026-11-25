@@ -101,9 +101,39 @@ h1 {
   height: 208px;
   margin: 0 auto 36px;
 }
+/* 背后光晕：让牌从背景里浮出来 */
+.deck::before {
+  content: '';
+  position: absolute;
+  inset: -16% -24%;
+  z-index: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(150, 120, 200, 0.22),
+    rgba(201, 168, 106, 0.1) 58%,
+    transparent 74%
+  );
+  filter: blur(9px);
+}
+/* 地面柔光：牌面溢出的暖光落在"地面"上 */
+.deck::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -30px;
+  width: 150%;
+  height: 40px;
+  z-index: 0;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(201, 168, 106, 0.18), transparent 72%);
+  filter: blur(7px);
+}
 .deck-card {
   position: absolute;
   inset: 0;
+  z-index: 1;
   border-radius: 10px;
   border: 1px solid rgba(216, 178, 106, 0.5);
   background:
@@ -140,7 +170,7 @@ h1 {
   font-size: 11px;
   letter-spacing: 0.04em;
   color: var(--muted);
-  opacity: 0.85;
+  opacity: 1;
 }
 .mood input {
   width: 100%;
@@ -156,7 +186,7 @@ h1 {
 }
 .mood input::placeholder {
   color: var(--muted);
-  opacity: 0.6;
+  opacity: 1;
 }
 .mood input:focus {
   border-color: rgba(216, 178, 106, 0.5);
@@ -181,7 +211,7 @@ h1 {
   margin: 18px 0 0;
   font-size: 11px;
   color: var(--muted);
-  opacity: 0.7;
+  opacity: 1;
 }
 .modal-mask {
   position: fixed;

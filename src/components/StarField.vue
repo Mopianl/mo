@@ -1,9 +1,9 @@
-﻿<script setup>
+<script setup>
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 /**
- * 星空层：银河带 + 星点闪烁 + 偶尔流星 + 轻微视差
- * - 全部程序化绘制，不依赖任何外部图片
+ * 星空层：银河带 + 白尘 + 三档星点（大星带芒 / 中星 / 微星）+ 呼吸星 + 流星
+ * - 全程程序化绘制，不依赖外部图片
  * - 30fps 上限、页面隐藏时暂停、系统「减少动效」时只画静态一帧
  */
 const canvasEl = ref(null)
@@ -17,13 +17,14 @@ let dpr = 1
 let raf = 0
 let running = true
 let lastDraw = 0
-let nextMeteor = 90
+let nextMeteor = 600
 let ticks = 0
 let reduceMotion = false
 let pointerX = 0
 let pointerY = 0
 
 const ANG = -0.46
+const BREATH_PERIOD = 108 // 约 3.6 秒（30fps 下）
 
 function build() {
   const el = canvasEl.value
@@ -40,31 +41,43 @@ function build() {
   const uy = Math.sin(ANG)
   const nx = -uy
   const ny = ux
-  const count = Math.round((el.clientWidth * el.clientHeight) / 3400)
 
-  stars = Array.from({ length: count }, () => {
-    const r = Math.random()
-    const inBand = Math.random() < 0.62
-    let x, y
+  // 数量比上一版多约 80%：微星点撑密度，视觉重量靠尺寸差控制
+  const count = Math.round((el.clientWidth * el.clientHeight) / 1900)
+
+  const place = (inBand) => {
     if (inBand) {
       const t = (Math.random() - 0.5) * W * 1.8
       const off = (Math.random() + Math.random() + Math.random() - 1.5) * 190 * dpr
-      x = cx + ux * t + nx * off
-      y = cy + uy * t + ny * off
-    } else {
-      x = Math.random() * W
-      y = Math.random() * H
+      return [cx + ux * t + nx * off, cy + uy * t + ny * off]
     }
-    return {
+    return [Math.random() * W, Math.random() * H]
+  }
+
+  stars = []
+  for (let i = 0; i < count; i++) {
+    const inBand = Math.random() < 0.58
+    const [x, y] = place(inBand)
+    const roll = Math.random()
+    // 三档：大星（带芒）3 颗、中星约 14%、其余为微星
+    let tier = 'micro'
+    if (i < 3) tier = 'big'
+    else if (roll < 0.14) tier = 'mid'
+
+    const base = tier === 'big' ? 0.92 : tier === 'mid' ? 0.6 : 0.22
+    stars.push({
       x,
       y,
-      r: (r < 0.78 ? 0.55 : r < 0.95 ? 1 : 1.6) * dpr,
-      a: (inBand ? 0.36 : 0.22) + Math.random() * 0.62,
+      tier,
+      r: (tier === 'big' ? 1.6 : tier === 'mid' ? 1 : 0.55) * dpr,
+      base,
+      warm: Math.random() < 0.26,
+      // 呼吸星：前两颗大星，相位错开半个周期
+      breath: tier === 'big' && i < 2 ? (i === 0 ? 0 : BREATH_PERIOD / 2) : -1,
       tw: 0.4 + Math.random() * 1.6,
-      ph: Math.random() * Math.PI * 2,
-      warm: Math.random() < 0.26
-    }
-  })
+      ph: Math.random() * Math.PI * 2
+    })
+  }
 }
 
 function spawnMeteor() {
@@ -80,24 +93,71 @@ function spawnMeteor() {
   })
 }
 
+/** 四角芒：两根细渐变线，成本几乎为零但"宝石感"明显 */
+function drawFlare(s, alpha) {
+  const len = 9 * dpr
+  for (let k = 0; k < 2; k++) {
+    const x2 = k === 0 ? s.x + len : s.x
+    const y2 = k === 0 ? s.y : s.y + len
+    const x1 = k === 0 ? s.x - len : s.x
+    const y1 = k === 0 ? s.y : s.y - len
+    const g = ctx.createLinearGradient(x1, y1, x2, y2)
+    g.addColorStop(0, 'rgba(255,250,240,0)')
+    g.addColorStop(0.5, `rgba(255,250,240,${0.55 * alpha})`)
+    g.addColorStop(1, 'rgba(255,250,240,0)')
+    ctx.strokeStyle = g
+    ctx.lineWidth = 0.7 * dpr
+    ctx.beginPath()
+    ctx.moveTo(x1, y1)
+    ctx.lineTo(x2, y2)
+    ctx.stroke()
+  }
+}
+
 function draw() {
   if (!ctx) return
   ctx.clearRect(0, 0, W, H)
 
   for (const s of stars) {
-    const flick = reduceMotion ? 0.85 : 0.55 + 0.45 * Math.sin(ticks * 0.012 * s.tw + s.ph)
-    ctx.globalAlpha = Math.max(0.06, s.a * flick)
-    ctx.fillStyle = s.warm ? '#e6d3ae' : '#e9e6ff'
-    ctx.beginPath()
-    ctx.arc(s.x, s.y, s.r, 0, 6.284)
-    ctx.fill()
+    let alpha = s.base
+    if (!reduceMotion) {
+      if (s.breath >= 0) {
+        // 呼吸星：3.6 秒一轮，0.35 → 0.95
+        const p = ((ticks + s.breath) % BREATH_PERIOD) / BREATH_PERIOD
+        alpha = 0.35 + 0.6 * (0.5 - 0.5 * Math.cos(p * Math.PI * 2))
+      } else {
+        alpha = s.base * (0.55 + 0.45 * Math.sin(ticks * 0.012 * s.tw + s.ph))
+      }
+    }
+    ctx.globalAlpha = Math.max(0.05, alpha)
+    ctx.fillStyle = s.warm ? '#e6d3ae' : '#eae7ff'
+    if (s.tier === 'big') {
+      // 大星：外圈柔光 + 核心 + 四角芒
+      const g = ctx.createRadialGradient(s.x, s.y, 0, s.x, s.y, 5 * dpr)
+      g.addColorStop(0, 'rgba(255,252,244,0.9)')
+      g.addColorStop(1, 'rgba(255,252,244,0)')
+      ctx.fillStyle = g
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, 5 * dpr, 0, 6.284)
+      ctx.fill()
+      ctx.fillStyle = '#fffdf6'
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.r * 0.75, 0, 6.284)
+      ctx.fill()
+      ctx.globalAlpha = Math.max(0.05, alpha)
+      drawFlare(s, alpha)
+    } else {
+      ctx.beginPath()
+      ctx.arc(s.x, s.y, s.r, 0, 6.284)
+      ctx.fill()
+    }
   }
   ctx.globalAlpha = 1
 
   if (!reduceMotion) {
     if (--nextMeteor <= 0) {
       spawnMeteor()
-      nextMeteor = 600 + Math.random() * 600 // 约 20–40 秒一颗（按 30fps 计）
+      nextMeteor = 600 + Math.random() * 600 // 约 20–40 秒一颗（30fps 计）
     }
     for (let i = meteors.length - 1; i >= 0; i--) {
       const m = meteors[i]
@@ -170,8 +230,7 @@ onMounted(() => {
   reduceMotion =
     window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
     document.documentElement.classList.contains('reduce-motion')
-  const el = canvasEl.value
-  ctx = el.getContext('2d')
+  ctx = canvasEl.value.getContext('2d')
   build()
   draw()
   if (!reduceMotion) raf = requestAnimationFrame(loop)
@@ -195,11 +254,12 @@ onBeforeUnmount(() => {
   <div class="sky" aria-hidden="true">
     <canvas ref="canvasEl" class="sky-canvas"></canvas>
     <div class="sky-glow"></div>
-    <div class="sky-grain"></div>
+    <div class="sky-fog"></div>
   </div>
 </template>
 
 <style scoped>
+/* 主银河带：紫色斜带 */
 .sky::before {
   content: '';
   position: absolute;
@@ -207,6 +267,7 @@ onBeforeUnmount(() => {
   top: 46%;
   width: 240vw;
   height: 300px;
+  z-index: 0;
   transform: translate(-50%, -50%) rotate(-26.4deg);
   background: linear-gradient(
     to bottom,
@@ -217,6 +278,32 @@ onBeforeUnmount(() => {
     rgba(120, 104, 186, 0) 100%
   );
   filter: blur(2px);
+}
+/* 星尘：极淡白雾，只落在画面上下两端，避开中段文字 */
+.sky::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 240vw;
+  height: 190px;
+  z-index: 1;
+  transform: translate(-50%, -50%) rotate(-26.4deg);
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  filter: blur(3px);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    transparent 34%,
+    transparent 66%,
+    #000 100%
+  );
+  mask-image: linear-gradient(to bottom, #000 0%, transparent 34%, transparent 66%, #000 100%);
 }
 .sky {
   position: fixed;
@@ -235,6 +322,7 @@ onBeforeUnmount(() => {
   inset: -8% 0 auto;
   width: 100%;
   height: 132%;
+  z-index: 2;
   will-change: transform;
 }
 .sky-glow {
@@ -243,14 +331,19 @@ onBeforeUnmount(() => {
   top: 42%;
   width: 72vw;
   height: 72vw;
+  z-index: 1;
   transform: translate(-50%, -50%);
   background: radial-gradient(circle, rgba(201, 168, 106, 0.09), transparent 62%);
   filter: blur(6px);
 }
-.sky-grain {
+/* 地面雾：压住画面下沿，不至于空掉 */
+.sky-fog {
   position: absolute;
-  inset: 0;
-  opacity: 0.05;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='120' height='120' filter='url(%23n)'/></svg>");
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 150px;
+  z-index: 3;
+  background: linear-gradient(to top, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
 }
 </style>

@@ -167,13 +167,52 @@ async function viewReading() {
   text-align: left;
 }
 .stage {
+  position: relative;
   display: grid;
   place-items: center;
   padding: 8px 0 26px;
   perspective: 1200px;
 }
+/* 背后光晕 + 地面柔光：给牌面一点体积感 */
+.stage::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 78vw;
+  max-width: 300px;
+  height: 78vw;
+  max-height: 300px;
+  z-index: 0;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(
+    closest-side,
+    rgba(150, 120, 200, 0.2),
+    rgba(201, 168, 106, 0.09) 58%,
+    transparent 74%
+  );
+  filter: blur(12px);
+  pointer-events: none;
+}
+.stage::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  width: 62vw;
+  max-width: 240px;
+  height: 34px;
+  z-index: 0;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(201, 168, 106, 0.16), transparent 72%);
+  filter: blur(8px);
+  pointer-events: none;
+}
 .card-shell {
   position: relative;
+  z-index: 1;
   width: min(58vw, 210px);
   aspect-ratio: 0.585;
   transform-style: preserve-3d;
@@ -312,7 +351,7 @@ h1 {
   font-size: 11px;
   line-height: 1.8;
   color: var(--muted);
-  opacity: 0.8;
+  opacity: 1;
 }
 .ghost {
   width: 100%;

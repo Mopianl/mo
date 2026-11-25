@@ -152,7 +152,7 @@ button:active:not(:disabled) {
   font-size: 11px;
   line-height: 1.7;
   color: var(--muted);
-  opacity: 0.7;
+  opacity: 1;
 }
 @keyframes rise {
   from {

@@ -1,4 +1,4 @@
-<script setup>
+﻿<script setup>
 import { onMounted, ref } from 'vue'
 import { loadSettings } from './data.js'
 import StarField from './components/StarField.vue'
@@ -37,6 +37,6 @@ onMounted(() => {
   font-size: 11px;
   line-height: 1.6;
   color: var(--muted);
-  opacity: 0.75;
+  opacity: 1;
 }
 </style>
