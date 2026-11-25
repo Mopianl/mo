@@ -14,7 +14,7 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageOps
 
 WIDTH = 640
-LIMIT = 100 * 1024
+LIMIT = 100_000  # 按十进制 100KB 卡，避免"100KB 到底算 102400 还是 100000"的歧义
 SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(r"D:\Working\web-project")
 OUT = Path(__file__).resolve().parent.parent / "public" / "cards"
 
