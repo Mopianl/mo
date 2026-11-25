@@ -1,0 +1,10 @@
+node_modules
+dist
+.dev.vars
+.wrangler
+.wrangler-config
+.wrangler-cache
+.npm-cache
+.tmp
+.DS_Store
+*.local
