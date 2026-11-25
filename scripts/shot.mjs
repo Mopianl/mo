@@ -1,4 +1,4 @@
-﻿// 用 CDP 截图（需要先手动启动 Edge：--remote-debugging-port=9222）
+// 用 CDP 截图（需要先手动启动 Edge：--remote-debugging-port=9222）
 // node scripts/shot.mjs <url> <out.png> [--auth]
 import fs from 'node:fs'
 import crypto from 'node:crypto'
@@ -70,6 +70,17 @@ if (withAuth) await send('Page.reload', { ignoreCache: false })
 await new Promise((r) => setTimeout(r, 2600))
 const state = await send('Runtime.evaluate', { expression: 'location.hash', returnByValue: true })
 console.log('landed on', state.result?.result?.value)
+
+// 可选：截图前点一下某个元素，用来看点选后的状态
+if (process.env.CLICK) {
+  const clicked = await send('Runtime.evaluate', {
+    expression: `(() => { const el = document.querySelector(${JSON.stringify(process.env.CLICK)}); if (!el) return 'not found'; el.click(); return 'clicked' })()`,
+    returnByValue: true
+  })
+  console.log(process.env.CLICK, '→', clicked.result?.result?.value)
+  await new Promise((r) => setTimeout(r, Number(process.env.CLICK_WAIT || 1800)))
+}
+
 const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false })
 fs.writeFileSync(out, Buffer.from(shot.result.data, 'base64'))
 console.log('saved', out, fs.statSync(out).size, 'bytes')
