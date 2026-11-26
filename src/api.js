@@ -48,8 +48,10 @@ export async function streamReading(payload, onDelta) {
   })
   if (!res.ok || !res.body) {
     const data = await res.json().catch(() => ({}))
-    const err = new Error(data.error || 'UPSTREAM_ERROR')
+    const err = new Error(data.message || data.error || 'UPSTREAM_ERROR')
     err.code = data.error || 'UPSTREAM_ERROR'
+    err.message2 = data.message || ''
+    err.status = res.status
     throw err
   }
   const reader = res.body.getReader()

@@ -1,7 +1,8 @@
-﻿import cards from '../../data/cards.json'
+import cards from '../../data/cards.json'
 import { isUnlocked, json } from '../_lib/auth.js'
 import { isCrisis, CRISIS_REPLY } from '../_lib/crisis.js'
 import { buildMessages, DISCLAIMER } from '../_lib/prompt.js'
+import { checkQuota } from '../_lib/limits.js'
 
 const FIRST_TOKEN_MS = 15000 // 首字 15 秒没来就降级
 const TOTAL_MS = 60000 // 整段最多 60 秒
@@ -56,6 +57,10 @@ export async function onRequestPost({ request, env }) {
 
   const apiKey = env.DEEPSEEK_API_KEY
   if (!apiKey) return json({ error: 'UPSTREAM_ERROR', detail: 'DEEPSEEK_API_KEY missing' }, 503)
+
+  // 三道闸门：每日上限、单 IP 限频、余额熔断（危机文案已在上面返回，不占额度）
+  const quota = await checkQuota(request, env, apiKey)
+  if (quota) return json({ error: quota.code, message: quota.message }, quota.status)
 
   const endpoint = env.DEEPSEEK_API_URL || 'https://api.deepseek.com/chat/completions'
   const model = env.DEEPSEEK_MODEL || MODEL_FALLBACK

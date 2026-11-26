@@ -71,13 +71,15 @@ await new Promise((r) => setTimeout(r, 2600))
 const state = await send('Runtime.evaluate', { expression: 'location.hash', returnByValue: true })
 console.log('landed on', state.result?.result?.value)
 
-// 可选：截图前点一下某个元素，用来看点选后的状态
-if (process.env.CLICK) {
+// 可选：截图前点一下某个元素，用来看点选后的状态；CLICK2 再点一次
+for (const key of ['CLICK', 'CLICK2']) {
+  const selector = process.env[key]
+  if (!selector) continue
   const clicked = await send('Runtime.evaluate', {
-    expression: `(() => { const el = document.querySelector(${JSON.stringify(process.env.CLICK)}); if (!el) return 'not found'; el.click(); return 'clicked' })()`,
+    expression: `(() => { const el = document.querySelector(${JSON.stringify(selector)}); if (!el) return 'not found'; el.click(); return 'clicked' })()`,
     returnByValue: true
   })
-  console.log(process.env.CLICK, '→', clicked.result?.result?.value)
+  console.log(key, selector, '→', clicked.result?.result?.value)
   await new Promise((r) => setTimeout(r, Number(process.env.CLICK_WAIT || 1800)))
 }
 

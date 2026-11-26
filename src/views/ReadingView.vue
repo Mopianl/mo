@@ -19,6 +19,7 @@ const degraded = ref(false)
 const started = ref(false)
 const errorMsg = ref('')
 const crisis = ref(false)
+const limited = ref('')
 
 const picked = computed(() => pickedIndex.value >= 0)
 const chosen = computed(() => (picked.value ? hand.value[pickedIndex.value] : null))
@@ -115,6 +116,18 @@ async function viewReading() {
       crisis.value = true
     }
   } catch (err) {
+    // 名额、限频、维护中：不展示牌义兜底，直接把情况说清楚
+    if (
+      err.code === 'DAILY_LIMIT' ||
+      err.code === 'IP_LIMIT' ||
+      err.code === 'BALANCE_LOW' ||
+      err.code === 'BALANCE_EMPTY'
+    ) {
+      started.value = false
+      streaming.value = false
+      limited.value = err.message2 || '今天先到这儿，明天再来'
+      return
+    }
     degraded.value = true
     if (err.partial) text.value = err.partial
     if (err.code === 'UPSTREAM_TIMEOUT') {
@@ -175,7 +188,8 @@ async function viewReading() {
           <li v-for="k in keywords" :key="k">{{ k }}</li>
         </ul>
 
-        <button v-if="!started" class="primary" v-float="{ lift: 5, range: 140 }" @click="viewReading">查看解读</button>
+        <p v-if="limited" class="note limit">{{ limited }}</p>
+        <button v-if="!started" class="primary" :disabled="!!limited" v-float="{ lift: 5, range: 140 }" @click="viewReading">查看解读</button>
         <template v-else>
           <p v-if="errorMsg" class="note">{{ errorMsg }}</p>
           <div class="reading-text" :class="{ typing: streaming }">
@@ -442,6 +456,12 @@ h1 {
   line-height: 2;
   color: #ded8ee;
   white-space: pre-wrap;
+}
+.note.limit {
+  color: var(--gold);
+}
+.primary:disabled {
+  opacity: 0.45;
 }
 .reading-text p {
   margin: 0 0 14px;
