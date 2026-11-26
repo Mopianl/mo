@@ -1,3 +1,8 @@
 name = "tarot-emotion"
 compatibility_date = "2026-11-23"
 pages_build_output_dir = "dist"
+
+# 限流与余额熔断用的 KV；命名空间 tarot-rate
+[[kv_namespaces]]
+binding = "RATE_KV"
+id = "c564ce65732f45f38dd4c7a4c106a837"
